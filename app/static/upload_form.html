@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload PDF to Generate Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input[type="file"], input[type="text"], input[type="number"], button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .quiz-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .quiz-question {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload a PDF to generate a quiz</h1>
+    <form id="quiz-form">
+        <input type="file" name="file" required><br>
+        <label for="difficulty">Difficulty:</label>
+        <input type="text" name="difficulty" value="medium"><br>
+        <label for="num_questions">Number of Questions:</label>
+        <input type="number" name="num_questions" value="5"><br>
+        <label for="language">Language:</label>
+        <input type="text" name="language" value="English"><br>
+        <label for="question_type">Question Type:</label>
+        <input type="text" name="question_type" value="mix"><br>
+        <button type="submit">Upload and Generate Quiz</button>
+    </form>
+
+    <div id="quiz-result" class="quiz-container" style="display: none;">
+        <h2>Generated Quiz</h2>
+        <div id="quiz-questions"></div>
+    </div>
+
+    <script>
+        document.getElementById("quiz-form").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/upload/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    console.log(response);
+                    const data = await response.json();
+                    
+                    displayQuiz(data.quiz);
+                } else {
+                    console.error('Error response from server:', response);
+                    alert('Failed to generate quiz. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error occurred. Please check your console for details.');
+            }
+        });
+
+        function displayQuiz(quiz) {
+            const quizContainer = document.getElementById("quiz-questions");
+            quizContainer.innerHTML = '';  // Clear previous results
+
+            if (Array.isArray(quiz)) {
+                quiz.forEach((question, index) => {
+                    const questionElement = document.createElement('div');
+                    questionElement.classList.add('quiz-question');
+                    questionElement.innerHTML = `
+                        <p><strong>Q${index + 1}:</strong> ${question.question}</p>
+                        <p><strong>Options:</strong> ${question.options.join(', ')}</p>
+                    `;
+                    quizContainer.appendChild(questionElement);
+                });
+            } else {
+                quizContainer.innerHTML = `<p>Invalid quiz data received. Please check the server.</p>`;
+            }
+
+            document.getElementById("quiz-result").style.display = 'block';
+        }
+    </script>
+</body>
+</html>
