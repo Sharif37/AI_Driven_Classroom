@@ -1,3 +1,5 @@
+/app/quran_text_sentiment
 .env
 /venv
 *.pdf
+*.pyc

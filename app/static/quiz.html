@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiz Generator</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+        color: #333;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      input[type="file"],
+      input[type="text"],
+      input[type="number"],
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+
+      button {
+        background-color: #3498db;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        width: 100%;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+
+      .loading-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        margin-left: 10px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error-message {
+        color: #e74c3c;
+        background-color: #fde8e8;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        display: none;
+      }
+
+      .quiz-results {
+        margin-top: 40px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>PDF Quiz Generator</h1>
+
+      <form id="quizForm" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="file">Upload PDF File:</label>
+          <input type="file" id="file" name="file" accept="application/pdf" required />
+        </div>
+
+        <div class="form-group">
+          <label for="difficulty">Difficulty Level:</label>
+          <select id="difficulty" name="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="num_questions">Number of Questions:</label>
+          <input type="number" id="num_questions" name="num_questions" value="5" min="1" max="20" required />
+        </div>
+
+        <div class="form-group">
+          <label for="language">Language:</label>
+          <input type="text" id="language" name="language" value="English" required />
+        </div>
+
+        <div class="form-group">
+          <label for="question_type">Question Type:</label>
+          <select id="question_type" name="question_type">
+            <option value="mcq">Multiple Choice</option>
+            <option value="true_false">True/False</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <button type="submit">Generate Quiz</button>
+          <div class="loading-spinner"></div>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+      </form>
+
+      <div id="quizResults" class="quiz-results">
+        <h2>Generated Quiz</h2>
+        <div id="quizContent"></div>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById("quizForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const loadingSpinner = document.querySelector(".loading-spinner");
+        const errorMessage = document.getElementById("errorMessage");
+        const quizResults = document.getElementById("quizResults");
+        const quizContent = document.getElementById("quizContent");
+
+        loadingSpinner.style.display = "inline-block";
+        errorMessage.style.display = "none";
+        quizResults.style.display = "none";
+
+        try {
+          const response = await fetch("/upload/", {
+            method: "POST",
+            body: formData
+          });
+
+          const data = await response.json();
+          loadingSpinner.style.display = "none";
+
+          if (data.quiz) {
+            quizResults.style.display = "block";
+            quizContent.innerHTML = JSON.stringify(data.quiz, null, 2);
+          } else if (data.error) {
+            errorMessage.style.display = "block";
+            errorMessage.textContent = `Error: ${data.error}`;
+          }
+        } catch (error) {
+          loadingSpinner.style.display = "none";
+          errorMessage.style.display = "block";
+          errorMessage.textContent = `Error: ${error.message}`;
+        }
+      });
+    </script>
+  </body>
+</html>
